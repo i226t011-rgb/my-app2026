@@ -302,20 +302,25 @@ function setupEventListeners() {
     const genBtn = document.getElementById('generate-menu');
     if (genBtn) {
         genBtn.addEventListener('click', () => {
-            if (confirm('現在の入力を上書きして、AIに献立を相談しますか？')) {
-                const loading = document.getElementById('ai-loading');
-                const grid = document.getElementById('meal-grid');
+            const loading = document.getElementById('ai-loading');
+            const grid = document.getElementById('meal-grid');
+            
+            if (loading) loading.style.display = 'block';
+            if (grid) grid.style.opacity = '0.3';
+            
+            // 少しスクロールして「考えている」演出を見せる
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            setTimeout(() => {
+                generateMenu();
+                renderAll();
+                if (loading) loading.style.display = 'none';
+                if (grid) grid.style.opacity = '1';
                 
-                if (loading) loading.style.display = 'block';
-                if (grid) grid.style.opacity = '0.3';
-                
-                setTimeout(() => {
-                    generateMenu();
-                    renderAll();
-                    if (loading) loading.style.display = 'none';
-                    if (grid) grid.style.opacity = '1';
-                }, 1500);
-            }
+                // 生成完了後に献立エリアへスクロール
+                const mealSection = document.querySelector('.current-week');
+                if (mealSection) mealSection.scrollIntoView({ behavior: 'smooth' });
+            }, 1200);
         });
     }
 

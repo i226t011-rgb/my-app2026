@@ -1,3 +1,48 @@
+const RECIPE_DB = [
+    // 朝食
+    { name: '卵かけご飯', tags: ['single', 'speed', 'budget', 'B', 'jp'], reason: 'シンプルかつ栄養価が高い定番です。' },
+    { name: 'トーストと目玉焼き', tags: ['single', 'couple', 'speed', 'B', 'western'], reason: '手早く作れて満足感があります。' },
+    { name: '鮭の塩焼きと味噌汁', tags: ['senior', 'health', 'low-salt', 'B', 'D', 'jp'], reason: '良質なタンパク質が摂れる健康的な献立です。' },
+    { name: '納豆と豆腐の味噌汁', tags: ['senior', 'health', 'soft', 'B', 'jp'], reason: '消化に良く、発酵食品で免疫力アップ。' },
+    { name: 'シリアルとバナナ', tags: ['single', 'speed', 'B', 'western'], reason: '忙しい朝でも火を使わずに準備完了。' },
+    { name: 'おにぎりと即席スープ', tags: ['single', 'speed', 'B', 'L', 'jp'], reason: '片手で食べられて、使い切りにも便利。' },
+    { name: 'ほうれん草のお浸しとご飯', tags: ['senior', 'health', 'low-salt', 'B', 'jp'], reason: '鉄分とビタミンを補給できる副菜メイン。' },
+    
+    // 昼食
+    { name: 'ワンパンパスタ', tags: ['single', 'speed', 'L', 'western'], reason: '洗い物が少なく、一人暮らしに最適です。' },
+    { name: '親子丼', tags: ['single', 'couple', 'budget', 'L', 'D', 'jp'], reason: '鶏肉と卵でコスパ良く、満足度も高い一品。' },
+    { name: '冷やしうどん', tags: ['single', 'senior', 'speed', 'soft', 'L', 'jp'], reason: '喉越しが良く、食欲がない時にも。' },
+    { name: 'サバ缶の炊き込みご飯', tags: ['single', 'couple', 'budget', 'L', 'D', 'jp'], reason: '缶詰活用で栄養満点、手間いらずです。' },
+    { name: '野菜炒め定食', tags: ['couple', 'health', 'L', 'D', 'jp'], reason: '冷蔵庫の余り野菜を一掃できます。' },
+    { name: 'チャーハン', tags: ['single', 'speed', 'budget', 'L', 'chinese'], reason: '高火力でサッと作れる節約メニュー。' },
+    { name: 'サンドイッチ', tags: ['single', 'couple', 'speed', 'L', 'western'], reason: '具材のアレンジがしやすく、軽めな昼食に。' },
+    
+    // 夕食
+    { name: '豆腐ハンバーグ', tags: ['senior', 'health', 'soft', 'D', 'jp'], reason: 'ヘルシーで柔らかく、体に優しい。' },
+    { name: '煮込みうどん', tags: ['senior', 'soft', 'health', 'D', 'jp'], reason: '野菜たっぷりで芯から温まります。' },
+    { name: '豚の生姜焼き', tags: ['couple', 'speed', 'D', 'jp'], reason: 'スタミナ補給に。ご飯が進みます。' },
+    { name: '鶏の照り焼き', tags: ['couple', 'budget', 'D', 'jp'], reason: '定番の味付けで家族に喜ばれます。' },
+    { name: '白身魚の蒸し物', tags: ['senior', 'health', 'low-salt', 'soft', 'D', 'jp'], reason: '蒸し料理で油を控え、素材の味を。' },
+    { name: '具だくさんポトフ', tags: ['couple', 'health', 'budget', 'D', 'western'], reason: '煮込むだけで野菜の旨みが凝縮。' },
+    { name: '肉じゃが', tags: ['couple', 'senior', 'health', 'D', 'jp'], reason: 'ほっこりする家庭の味。常備菜にも。' },
+    { name: 'カレーライス', tags: ['single', 'couple', 'budget', 'D', 'western'], reason: '作り置きができる、みんな大好きメニュー。' },
+    { name: '湯豆腐', tags: ['senior', 'health', 'soft', 'low-salt', 'D', 'jp'], reason: '究極のシンプル健康食。' },
+    { name: '厚揚げの煮物', tags: ['senior', 'budget', 'soft', 'D', 'jp'], reason: '安価な厚揚げを美味しくボリュームアップ。' },
+    { name: '麻婆豆腐', tags: ['single', 'couple', 'speed', 'D', 'chinese'], reason: '豆腐メインでヘルシーかつご飯に合う。' },
+    { name: 'アジの開き', tags: ['senior', 'health', 'low-salt', 'D', 'jp'], reason: '魚の栄養を丸ごと摂れる和の朝食。' },
+    { name: 'ポークビーンズ', tags: ['couple', 'health', 'budget', 'D', 'western'], reason: '豆類と豚肉で栄養バランスが抜群。' }
+];
+
+const AI_ADVICE_TEMPLATES = {
+    speed: '今週は忙しそうですね。手間のかからない「時短メニュー」を中心に、洗い物が少なくて済むよう構成しました。無理せず自炊を続けましょう！',
+    health: '健康を第一に考え、野菜を多く摂取できる「栄養バランス重視」の献立にしました。シニアの方にも優しい、薄味でも満足できる内容です。',
+    budget: '今週は家計に優しい「節約・使い切りメニュー」で構成しました。サバ缶や豆腐などのコスパ食材を上手に活用して、美味しく節約しましょう。',
+    general: 'あなたの生活スタイルに合わせて、和食・洋食をバランスよく取り入れた献立を作成しました。楽しい食事の時間を！'
+};
+
+const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
+const MEAL_TYPES = { B: '朝食', L: '昼食', D: '夕食' };
+
 // 状態管理
 let state = {
     profile: {
@@ -7,38 +52,11 @@ let state = {
     },
     currentWeek: {
         startDate: '',
-        meals: {} // { '2026-05-11': { B: '', L: '', D: '' }, ... }
+        meals: {}, // { '2026-05-11': { B: '', L: '', D: '', reasons: { B: '', L: '', D: '' } } }
+        aiAdvice: ''
     },
     history: []
 };
-
-const RECIPE_DB = [
-    { name: '卵かけご飯', tags: ['single', 'speed', 'budget', 'B'] },
-    { name: 'トーストと目玉焼き', tags: ['single', 'couple', 'speed', 'B'] },
-    { name: '鮭の塩焼きと味噌汁', tags: ['senior', 'health', 'low-salt', 'B', 'D'] },
-    { name: '納豆と豆腐の味噌汁', tags: ['senior', 'health', 'soft', 'B'] },
-    { name: 'おにぎりと即席スープ', tags: ['single', 'speed', 'B', 'L'] },
-    
-    { name: 'ワンパンパスタ', tags: ['single', 'speed', 'L'] },
-    { name: '親子丼', tags: ['single', 'couple', 'budget', 'L', 'D'] },
-    { name: '冷やしうどん', tags: ['single', 'senior', 'speed', 'soft', 'L'] },
-    { name: 'サバ缶の炊き込みご飯', tags: ['single', 'couple', 'budget', 'L', 'D'] },
-    { name: '野菜炒め定食', tags: ['couple', 'health', 'L', 'D'] },
-    
-    { name: '豆腐ハンバーグ', tags: ['senior', 'health', 'soft', 'D'] },
-    { name: '煮込みうどん', tags: ['senior', 'soft', 'health', 'D'] },
-    { name: '豚の生姜焼き', tags: ['couple', 'speed', 'D'] },
-    { name: '鶏の照り焼き', tags: ['couple', 'budget', 'D'] },
-    { name: '白身魚の蒸し物', tags: ['senior', 'health', 'low-salt', 'soft', 'D'] },
-    { name: '具だくさんポトフ', tags: ['couple', 'health', 'budget', 'D'] },
-    { name: '肉じゃが', tags: ['couple', 'senior', 'health', 'D'] },
-    { name: 'カレーライス', tags: ['single', 'couple', 'budget', 'D'] },
-    { name: '湯豆腐', tags: ['senior', 'health', 'soft', 'low-salt', 'D'] },
-    { name: '厚揚げの煮物', tags: ['senior', 'budget', 'soft', 'D'] }
-];
-
-const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
-const MEAL_TYPES = { B: '朝食', L: '昼食', D: '夕食' };
 
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
@@ -60,27 +78,40 @@ function syncProfileUI() {
 function generateMenu() {
     const { household, priority, diet } = state.profile;
     const dates = Object.keys(state.currentWeek.meals);
+    const usedRecipes = new Set();
+    const genres = ['jp', 'western', 'chinese'];
+    let lastGenre = '';
     
     dates.forEach(date => {
+        state.currentWeek.meals[date].reasons = {};
         ['B', 'L', 'D'].forEach(type => {
             // 条件に合うレシピをフィルタリング
             let candidates = RECIPE_DB.filter(r => r.tags.includes(type));
             
-            // 属性による重み付け（簡易的にフィルタリング）
+            // 属性によるフィルタリング（重み付け）
             let filtered = candidates.filter(r => 
-                r.tags.includes(household) || r.tags.includes(priority) || (diet !== 'none' && r.tags.includes(diet))
+                (r.tags.includes(household) || r.tags.includes(priority) || (diet !== 'none' && r.tags.includes(diet))) &&
+                !usedRecipes.has(r.name) &&
+                r.tags.filter(t => genres.includes(t))[0] !== lastGenre // ジャンルの重複を避ける
             );
             
-            // 候補がなければ広めに取る
+            // 候補が少なすぎる場合は条件を緩める
+            if (filtered.length === 0) {
+                filtered = candidates.filter(r => !usedRecipes.has(r.name));
+            }
             if (filtered.length === 0) filtered = candidates;
             
             const picked = filtered[Math.floor(Math.random() * filtered.length)];
             state.currentWeek.meals[date][type] = picked.name;
+            state.currentWeek.meals[date].reasons[type] = picked.reason;
+            usedRecipes.add(picked.name);
+            lastGenre = picked.tags.filter(t => genres.includes(t))[0] || '';
         });
     });
     
+    state.currentWeek.aiAdvice = AI_ADVICE_TEMPLATES[priority] || AI_ADVICE_TEMPLATES.general;
+    
     saveToLocalStorage();
-    renderGrid();
 }
 
 function initNewWeek() {
@@ -118,7 +149,19 @@ function formatDate(date) {
 function renderAll() {
     renderGrid();
     renderHistory();
+    renderAIAdvice();
     if (window.lucide) lucide.createIcons();
+}
+
+function renderAIAdvice() {
+    const section = document.getElementById('ai-advice-section');
+    const text = document.getElementById('ai-advice-text');
+    if (state.currentWeek.aiAdvice) {
+        text.textContent = state.currentWeek.aiAdvice;
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
+    }
 }
 
 function renderGrid() {
@@ -128,9 +171,9 @@ function renderGrid() {
     const sortedDates = Object.keys(state.currentWeek.meals).sort();
     
     sortedDates.forEach((dateStr, index) => {
-        const dateObj = new Date(dateStr);
         const dayName = WEEKDAYS[index];
         const meals = state.currentWeek.meals[dateStr];
+        const reasons = meals.reasons || {};
 
         const card = document.createElement('div');
         card.className = 'day-card';
@@ -139,18 +182,13 @@ function renderGrid() {
                 <span class="weekday">${dayName}曜日</span>
                 <span class="date">${dateStr.replace(/-/g, '/')}</span>
             </h3>
-            <div class="meal-input-group">
-                <label>${MEAL_TYPES.B}</label>
-                <input type="text" data-date="${dateStr}" data-type="B" value="${meals.B}" placeholder="例: トースト、卵">
-            </div>
-            <div class="meal-input-group">
-                <label>${MEAL_TYPES.L}</label>
-                <input type="text" data-date="${dateStr}" data-type="L" value="${meals.L}" placeholder="例: パスタ">
-            </div>
-            <div class="meal-input-group">
-                <label>${MEAL_TYPES.D}</label>
-                <input type="text" data-date="${dateStr}" data-type="D" value="${meals.D}" placeholder="例: 焼き魚、味噌汁">
-            </div>
+            ${['B', 'L', 'D'].map(type => `
+                <div class="meal-input-group">
+                    <label>${MEAL_TYPES[type]}</label>
+                    <input type="text" data-date="${dateStr}" data-type="${type}" value="${meals[type]}" placeholder="例: パスタ">
+                    ${reasons[type] ? `<div class="meal-reason">AI: ${reasons[type]}</div>` : ''}
+                </div>
+            `).join('')}
         `;
         grid.appendChild(card);
     });
@@ -160,6 +198,10 @@ function renderGrid() {
         input.addEventListener('input', (e) => {
             const { date, type } = e.target.dataset;
             state.currentWeek.meals[date][type] = e.target.value;
+            // 手動入力されたらAIの理由は消す
+            if (state.currentWeek.meals[date].reasons) {
+                delete state.currentWeek.meals[date].reasons[type];
+            }
             saveToLocalStorage();
         });
     });
@@ -215,8 +257,19 @@ function setupEventListeners() {
 
     // 献立生成
     document.getElementById('generate-menu').addEventListener('click', () => {
-        if (confirm('現在の入力を上書きして、あなたのプロフィールに合わせた献立を提案しますか？')) {
-            generateMenu();
+        if (confirm('現在の入力を上書きして、AIに献立を相談しますか？')) {
+            const loading = document.getElementById('ai-loading');
+            const grid = document.getElementById('meal-grid');
+            
+            loading.style.display = 'block';
+            grid.style.opacity = '0.3';
+            
+            setTimeout(() => {
+                generateMenu();
+                renderAll();
+                loading.style.display = 'none';
+                grid.style.opacity = '1';
+            }, 1500); // 1.5秒待機して「考えている感」を出す
         }
     });
 

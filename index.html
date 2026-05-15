@@ -52,14 +52,29 @@
             </div>
         </section>
 
+        <section id="ai-advice-section" class="ai-advice-section" style="display: none;">
+            <div class="ai-message-bubble">
+                <div class="ai-icon"><i data-lucide="sparkles"></i></div>
+                <div class="ai-text">
+                    <strong>AIからのアドバイス:</strong>
+                    <span id="ai-advice-text"></span>
+                </div>
+            </div>
+        </section>
+
         <section class="current-week">
             <div class="section-header">
                 <h2>今週の献立</h2>
                 <div class="actions">
-                    <button id="generate-menu" class="btn btn-accent"><i data-lucide="sparkles"></i> 献立を自動提案</button>
+                    <button id="generate-menu" class="btn btn-accent"><i data-lucide="sparkles"></i> 献立をAIに相談する</button>
                     <button id="save-week" class="btn btn-primary"><i data-lucide="check-circle"></i> 完了して履歴へ</button>
                     <button id="clear-week" class="btn btn-outline"><i data-lucide="trash-2"></i> クリア</button>
                 </div>
+            </div>
+
+            <div id="ai-loading" class="ai-loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>あなたのプロフィールを分析して、最適な献立を考えています...</p>
             </div>
             
             <div id="meal-grid" class="meal-grid">

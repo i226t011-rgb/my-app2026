@@ -44,7 +44,7 @@ const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
 const MEAL_TYPES = { B: '朝食', L: '昼食', D: '夕食' };
 
 // 状態管理
-let state = {
+const DEFAULT_STATE = {
     profile: {
         household: 'single',
         priority: 'speed',
@@ -52,66 +52,93 @@ let state = {
     },
     currentWeek: {
         startDate: '',
-        meals: {}, // { '2026-05-11': { B: '', L: '', D: '', reasons: { B: '', L: '', D: '' } } }
+        meals: {},
         aiAdvice: ''
     },
     history: []
 };
 
+let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
-    loadFromLocalStorage();
-    if (!state.currentWeek.startDate) {
-        initNewWeek();
+    try {
+        loadFromLocalStorage();
+        if (!state.currentWeek.startDate || Object.keys(state.currentWeek.meals).length === 0) {
+            initNewWeek();
+        }
+        syncProfileUI();
+        renderAll();
+        setupEventListeners();
+    } catch (e) {
+        console.error('Initialization failed:', e);
+        if (confirm('アプリの起動に失敗しました。データをリセットして初期化しますか？')) {
+            localStorage.removeItem('mealPlannerData');
+            location.reload();
+        }
     }
-    syncProfileUI();
-    renderAll();
-    setupEventListeners();
 });
 
 function syncProfileUI() {
-    document.getElementById('profile-household').value = state.profile.household;
-    document.getElementById('profile-priority').value = state.profile.priority;
-    document.getElementById('profile-diet').value = state.profile.diet;
+    try {
+        const h = document.getElementById('profile-household');
+        const p = document.getElementById('profile-priority');
+        const d = document.getElementById('profile-diet');
+        if (h) h.value = state.profile.household;
+        if (p) p.value = state.profile.priority;
+        if (d) d.value = state.profile.diet;
+    } catch (e) {
+        console.warn('Profile UI sync failed', e);
+    }
 }
 
 function generateMenu() {
-    const { household, priority, diet } = state.profile;
-    const dates = Object.keys(state.currentWeek.meals);
-    const usedRecipes = new Set();
-    const genres = ['jp', 'western', 'chinese'];
-    let lastGenre = '';
-    
-    dates.forEach(date => {
-        state.currentWeek.meals[date].reasons = {};
-        ['B', 'L', 'D'].forEach(type => {
-            // 条件に合うレシピをフィルタリング
-            let candidates = RECIPE_DB.filter(r => r.tags.includes(type));
-            
-            // 属性によるフィルタリング（重み付け）
-            let filtered = candidates.filter(r => 
-                (r.tags.includes(household) || r.tags.includes(priority) || (diet !== 'none' && r.tags.includes(diet))) &&
-                !usedRecipes.has(r.name) &&
-                r.tags.filter(t => genres.includes(t))[0] !== lastGenre // ジャンルの重複を避ける
-            );
-            
-            // 候補が少なすぎる場合は条件を緩める
-            if (filtered.length === 0) {
-                filtered = candidates.filter(r => !usedRecipes.has(r.name));
+    try {
+        const { household, priority, diet } = state.profile;
+        const dates = Object.keys(state.currentWeek.meals);
+        if (dates.length === 0) {
+            initNewWeek();
+            return generateMenu();
+        }
+
+        const usedRecipes = new Set();
+        const genres = ['jp', 'western', 'chinese'];
+        let lastGenre = '';
+        
+        dates.forEach(date => {
+            if (!state.currentWeek.meals[date] || typeof state.currentWeek.meals[date] !== 'object') {
+                state.currentWeek.meals[date] = { B: '', L: '', D: '' };
             }
-            if (filtered.length === 0) filtered = candidates;
+            state.currentWeek.meals[date].reasons = {};
             
-            const picked = filtered[Math.floor(Math.random() * filtered.length)];
-            state.currentWeek.meals[date][type] = picked.name;
-            state.currentWeek.meals[date].reasons[type] = picked.reason;
-            usedRecipes.add(picked.name);
-            lastGenre = picked.tags.filter(t => genres.includes(t))[0] || '';
+            ['B', 'L', 'D'].forEach(type => {
+                let candidates = RECIPE_DB.filter(r => r.tags.includes(type));
+                
+                let filtered = candidates.filter(r => 
+                    (r.tags.includes(household) || r.tags.includes(priority) || (diet !== 'none' && r.tags.includes(diet))) &&
+                    !usedRecipes.has(r.name) &&
+                    r.tags.filter(t => genres.includes(t))[0] !== lastGenre
+                );
+                
+                if (filtered.length === 0) {
+                    filtered = candidates.filter(r => !usedRecipes.has(r.name));
+                }
+                if (filtered.length === 0) filtered = candidates;
+                
+                const picked = filtered[Math.floor(Math.random() * filtered.length)];
+                state.currentWeek.meals[date][type] = picked.name;
+                state.currentWeek.meals[date].reasons[type] = picked.reason;
+                usedRecipes.add(picked.name);
+                lastGenre = picked.tags.filter(t => genres.includes(t))[0] || '';
+            });
         });
-    });
-    
-    state.currentWeek.aiAdvice = AI_ADVICE_TEMPLATES[priority] || AI_ADVICE_TEMPLATES.general;
-    
-    saveToLocalStorage();
+        
+        state.currentWeek.aiAdvice = AI_ADVICE_TEMPLATES[priority] || AI_ADVICE_TEMPLATES.general;
+        saveToLocalStorage();
+    } catch (e) {
+        console.error('Menu generation failed:', e);
+        alert('献立の生成中にエラーが発生しました。');
+    }
 }
 
 function initNewWeek() {
@@ -126,19 +153,31 @@ function initNewWeek() {
     for (let i = 0; i < 7; i++) {
         const d = new Date(monday);
         d.setDate(monday.getDate() + i);
-        state.currentWeek.meals[formatDate(d)] = { B: '', L: '', D: '' };
+        state.currentWeek.meals[formatDate(d)] = { B: '', L: '', D: '', reasons: {} };
     }
     saveToLocalStorage();
 }
 
 function loadFromLocalStorage() {
-    const data = localStorage.getItem('mealPlannerData');
-    if (data) {
-        const savedState = JSON.parse(data);
-        // 既存のデータ構造に新しいプロパティを安全にマージ
-        state.profile = { ...state.profile, ...(savedState.profile || {}) };
-        state.currentWeek = { ...state.currentWeek, ...(savedState.currentWeek || {}) };
-        state.history = savedState.history || [];
+    try {
+        const data = localStorage.getItem('mealPlannerData');
+        if (data) {
+            const savedState = JSON.parse(data);
+            state.profile = Object.assign({}, DEFAULT_STATE.profile, savedState.profile);
+            state.currentWeek = Object.assign({}, DEFAULT_STATE.currentWeek, savedState.currentWeek);
+            state.history = savedState.history || [];
+            
+            if (state.currentWeek.meals) {
+                Object.keys(state.currentWeek.meals).forEach(date => {
+                    if (typeof state.currentWeek.meals[date] !== 'object') {
+                        state.currentWeek.meals[date] = { B: '', L: '', D: '', reasons: {} };
+                    }
+                });
+            }
+        }
+    } catch (e) {
+        console.warn('LocalStorage load failed');
+        state = JSON.parse(JSON.stringify(DEFAULT_STATE));
     }
 }
 
@@ -170,6 +209,7 @@ function renderAIAdvice() {
 
 function renderGrid() {
     const grid = document.getElementById('meal-grid');
+    if (!grid) return;
     grid.innerHTML = '';
 
     const sortedDates = Object.keys(state.currentWeek.meals).sort();
@@ -189,7 +229,7 @@ function renderGrid() {
             ${['B', 'L', 'D'].map(type => `
                 <div class="meal-input-group">
                     <label>${MEAL_TYPES[type]}</label>
-                    <input type="text" data-date="${dateStr}" data-type="${type}" value="${meals[type]}" placeholder="例: パスタ">
+                    <input type="text" data-date="${dateStr}" data-type="${type}" value="${meals[type] || ''}" placeholder="例: パスタ">
                     ${reasons[type] ? `<div class="meal-reason">AI: ${reasons[type]}</div>` : ''}
                 </div>
             `).join('')}
@@ -197,12 +237,10 @@ function renderGrid() {
         grid.appendChild(card);
     });
 
-    // 入力イベントの監視
     grid.querySelectorAll('input').forEach(input => {
         input.addEventListener('input', (e) => {
             const { date, type } = e.target.dataset;
             state.currentWeek.meals[date][type] = e.target.value;
-            // 手動入力されたらAIの理由は消す
             if (state.currentWeek.meals[date].reasons) {
                 delete state.currentWeek.meals[date].reasons[type];
             }
@@ -213,6 +251,7 @@ function renderGrid() {
 
 function renderHistory() {
     const list = document.getElementById('history-list');
+    if (!list) return;
     if (state.history.length === 0) {
         list.innerHTML = '<p class="empty-state">履歴はまだありません。</p>';
         return;
@@ -235,7 +274,6 @@ function renderHistory() {
         list.appendChild(historyItem);
     });
 
-    // 削除ボタンのイベント
     list.querySelectorAll('.delete-history').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const index = e.currentTarget.dataset.index;
@@ -250,51 +288,59 @@ function renderHistory() {
 }
 
 function setupEventListeners() {
-    // プロフィール変更の監視
     ['profile-household', 'profile-priority', 'profile-diet'].forEach(id => {
-        document.getElementById(id).addEventListener('change', (e) => {
-            const key = id.replace('profile-', '');
-            state.profile[key] = e.target.value;
-            saveToLocalStorage();
-        });
-    });
-
-    // 献立生成
-    document.getElementById('generate-menu').addEventListener('click', () => {
-        if (confirm('現在の入力を上書きして、AIに献立を相談しますか？')) {
-            const loading = document.getElementById('ai-loading');
-            const grid = document.getElementById('meal-grid');
-            
-            loading.style.display = 'block';
-            grid.style.opacity = '0.3';
-            
-            setTimeout(() => {
-                generateMenu();
-                renderAll();
-                loading.style.display = 'none';
-                grid.style.opacity = '1';
-            }, 1500); // 1.5秒待機して「考えている感」を出す
-        }
-    });
-
-    document.getElementById('save-week').addEventListener('click', () => {
-        if (confirm('今週の献立を履歴に保存して、新しい週を開始しますか？')) {
-            // 現在の週を履歴に追加
-            state.history.push(JSON.parse(JSON.stringify(state.currentWeek)));
-            // 新しい週を初期化
-            initNewWeek();
-            renderAll();
-            alert('履歴に保存しました！');
-        }
-    });
-
-    document.getElementById('clear-week').addEventListener('click', () => {
-        if (confirm('今週の入力をすべて消去しますか？')) {
-            Object.keys(state.currentWeek.meals).forEach(date => {
-                state.currentWeek.meals[date] = { B: '', L: '', D: '' };
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', (e) => {
+                const key = id.replace('profile-', '');
+                state.profile[key] = e.target.value;
+                saveToLocalStorage();
             });
-            saveToLocalStorage();
-            renderGrid();
         }
     });
+
+    const genBtn = document.getElementById('generate-menu');
+    if (genBtn) {
+        genBtn.addEventListener('click', () => {
+            if (confirm('現在の入力を上書きして、AIに献立を相談しますか？')) {
+                const loading = document.getElementById('ai-loading');
+                const grid = document.getElementById('meal-grid');
+                
+                if (loading) loading.style.display = 'block';
+                if (grid) grid.style.opacity = '0.3';
+                
+                setTimeout(() => {
+                    generateMenu();
+                    renderAll();
+                    if (loading) loading.style.display = 'none';
+                    if (grid) grid.style.opacity = '1';
+                }, 1500);
+            }
+        });
+    }
+
+    const saveBtn = document.getElementById('save-week');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            if (confirm('今週の献立を履歴に保存して、新しい週を開始しますか？')) {
+                state.history.push(JSON.parse(JSON.stringify(state.currentWeek)));
+                initNewWeek();
+                renderAll();
+                alert('履歴に保存しました！');
+            }
+        });
+    }
+
+    const clearBtn = document.getElementById('clear-week');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (confirm('今週の入力をすべて消去しますか？')) {
+                Object.keys(state.currentWeek.meals).forEach(date => {
+                    state.currentWeek.meals[date] = { B: '', L: '', D: '', reasons: {} };
+                });
+                saveToLocalStorage();
+                renderGrid();
+            }
+        });
+    }
 }

@@ -134,7 +134,11 @@ function initNewWeek() {
 function loadFromLocalStorage() {
     const data = localStorage.getItem('mealPlannerData');
     if (data) {
-        state = JSON.parse(data);
+        const savedState = JSON.parse(data);
+        // 既存のデータ構造に新しいプロパティを安全にマージ
+        state.profile = { ...state.profile, ...(savedState.profile || {}) };
+        state.currentWeek = { ...state.currentWeek, ...(savedState.currentWeek || {}) };
+        state.history = savedState.history || [];
     }
 }
 

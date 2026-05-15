@@ -1,11 +1,41 @@
 // 状態管理
 let state = {
+    profile: {
+        household: 'single',
+        priority: 'speed',
+        diet: 'none'
+    },
     currentWeek: {
         startDate: '',
         meals: {} // { '2026-05-11': { B: '', L: '', D: '' }, ... }
     },
     history: []
 };
+
+const RECIPE_DB = [
+    { name: '卵かけご飯', tags: ['single', 'speed', 'budget', 'B'] },
+    { name: 'トーストと目玉焼き', tags: ['single', 'couple', 'speed', 'B'] },
+    { name: '鮭の塩焼きと味噌汁', tags: ['senior', 'health', 'low-salt', 'B', 'D'] },
+    { name: '納豆と豆腐の味噌汁', tags: ['senior', 'health', 'soft', 'B'] },
+    { name: 'おにぎりと即席スープ', tags: ['single', 'speed', 'B', 'L'] },
+    
+    { name: 'ワンパンパスタ', tags: ['single', 'speed', 'L'] },
+    { name: '親子丼', tags: ['single', 'couple', 'budget', 'L', 'D'] },
+    { name: '冷やしうどん', tags: ['single', 'senior', 'speed', 'soft', 'L'] },
+    { name: 'サバ缶の炊き込みご飯', tags: ['single', 'couple', 'budget', 'L', 'D'] },
+    { name: '野菜炒め定食', tags: ['couple', 'health', 'L', 'D'] },
+    
+    { name: '豆腐ハンバーグ', tags: ['senior', 'health', 'soft', 'D'] },
+    { name: '煮込みうどん', tags: ['senior', 'soft', 'health', 'D'] },
+    { name: '豚の生姜焼き', tags: ['couple', 'speed', 'D'] },
+    { name: '鶏の照り焼き', tags: ['couple', 'budget', 'D'] },
+    { name: '白身魚の蒸し物', tags: ['senior', 'health', 'low-salt', 'soft', 'D'] },
+    { name: '具だくさんポトフ', tags: ['couple', 'health', 'budget', 'D'] },
+    { name: '肉じゃが', tags: ['couple', 'senior', 'health', 'D'] },
+    { name: 'カレーライス', tags: ['single', 'couple', 'budget', 'D'] },
+    { name: '湯豆腐', tags: ['senior', 'health', 'soft', 'low-salt', 'D'] },
+    { name: '厚揚げの煮物', tags: ['senior', 'budget', 'soft', 'D'] }
+];
 
 const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
 const MEAL_TYPES = { B: '朝食', L: '昼食', D: '夕食' };
@@ -16,9 +46,42 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!state.currentWeek.startDate) {
         initNewWeek();
     }
+    syncProfileUI();
     renderAll();
     setupEventListeners();
 });
+
+function syncProfileUI() {
+    document.getElementById('profile-household').value = state.profile.household;
+    document.getElementById('profile-priority').value = state.profile.priority;
+    document.getElementById('profile-diet').value = state.profile.diet;
+}
+
+function generateMenu() {
+    const { household, priority, diet } = state.profile;
+    const dates = Object.keys(state.currentWeek.meals);
+    
+    dates.forEach(date => {
+        ['B', 'L', 'D'].forEach(type => {
+            // 条件に合うレシピをフィルタリング
+            let candidates = RECIPE_DB.filter(r => r.tags.includes(type));
+            
+            // 属性による重み付け（簡易的にフィルタリング）
+            let filtered = candidates.filter(r => 
+                r.tags.includes(household) || r.tags.includes(priority) || (diet !== 'none' && r.tags.includes(diet))
+            );
+            
+            // 候補がなければ広めに取る
+            if (filtered.length === 0) filtered = candidates;
+            
+            const picked = filtered[Math.floor(Math.random() * filtered.length)];
+            state.currentWeek.meals[date][type] = picked.name;
+        });
+    });
+    
+    saveToLocalStorage();
+    renderGrid();
+}
 
 function initNewWeek() {
     const today = new Date();
@@ -141,6 +204,22 @@ function renderHistory() {
 }
 
 function setupEventListeners() {
+    // プロフィール変更の監視
+    ['profile-household', 'profile-priority', 'profile-diet'].forEach(id => {
+        document.getElementById(id).addEventListener('change', (e) => {
+            const key = id.replace('profile-', '');
+            state.profile[key] = e.target.value;
+            saveToLocalStorage();
+        });
+    });
+
+    // 献立生成
+    document.getElementById('generate-menu').addEventListener('click', () => {
+        if (confirm('現在の入力を上書きして、あなたのプロフィールに合わせた献立を提案しますか？')) {
+            generateMenu();
+        }
+    });
+
     document.getElementById('save-week').addEventListener('click', () => {
         if (confirm('今週の献立を履歴に保存して、新しい週を開始しますか？')) {
             // 現在の週を履歴に追加

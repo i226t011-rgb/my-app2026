@@ -19,12 +19,46 @@
     </header>
 
     <main class="container">
+        <section class="user-profile">
+            <div class="card profile-card">
+                <h3><i data-lucide="user-cog"></i> あなたのプロフィール</h3>
+                <div class="profile-settings">
+                    <div class="setting-group">
+                        <label>世帯構成</label>
+                        <select id="profile-household">
+                            <option value="single">一人暮らし</option>
+                            <option value="couple">夫婦（2人）</option>
+                            <option value="senior">シニア夫婦</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>重視すること</label>
+                        <select id="profile-priority">
+                            <option value="speed">時短・手軽さ</option>
+                            <option value="health">栄養バランス・健康</option>
+                            <option value="budget">節約・使い切り</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>健康への配慮</label>
+                        <select id="profile-diet">
+                            <option value="none">特になし</option>
+                            <option value="low-salt">塩分控えめ</option>
+                            <option value="low-calorie">カロリー控えめ</option>
+                            <option value="soft">柔らかめ・消化に良い</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="current-week">
             <div class="section-header">
                 <h2>今週の献立</h2>
                 <div class="actions">
-                    <button id="save-week" class="btn btn-primary"><i data-lucide="check-circle"></i> 今週を完了して保存</button>
-                    <button id="clear-week" class="btn btn-outline"><i data-lucide="trash-2"></i> リセット</button>
+                    <button id="generate-menu" class="btn btn-accent"><i data-lucide="sparkles"></i> 献立を自動提案</button>
+                    <button id="save-week" class="btn btn-primary"><i data-lucide="check-circle"></i> 完了して履歴へ</button>
+                    <button id="clear-week" class="btn btn-outline"><i data-lucide="trash-2"></i> クリア</button>
                 </div>
             </div>
             

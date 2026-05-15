@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一週間の献立メーカー</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><i data-lucide="utensils"></i> 一週間の献立メーカー</h1>
+            <p class="subtitle">健康な食生活を計画的に</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="current-week">
+            <div class="section-header">
+                <h2>今週の献立</h2>
+                <div class="actions">
+                    <button id="save-week" class="btn btn-primary"><i data-lucide="check-circle"></i> 今週を完了して保存</button>
+                    <button id="clear-week" class="btn btn-outline"><i data-lucide="trash-2"></i> リセット</button>
+                </div>
+            </div>
+            
+            <div id="meal-grid" class="meal-grid">
+                <!-- 曜日カードがJSで生成される -->
+            </div>
+        </section>
+
+        <section class="history">
+            <div class="section-header">
+                <h2>過去のログ</h2>
+            </div>
+            <div id="history-list" class="history-list">
+                <!-- 履歴がJSで生成される -->
+                <p class="empty-state">履歴はまだありません。</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Meal Planner App</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+      lucide.createIcons();
+    </script>
+</body>
+</html>
